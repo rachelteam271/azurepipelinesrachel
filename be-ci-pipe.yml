@@ -1,45 +1,58 @@
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: refs/heads/main
+
 trigger:
   branches:
     include:
     - '*'
- 
-steps:
-- task: Npm@1
-  inputs:
-    workingDir: server
-    verbose: false
-  displayName: 'npm install'
- 
-- task: Npm@1
-  inputs:
-    workingDir: server
-    verbose: false
-    customCommand: 'run build'
-  displayName: 'npm build'
- 
-- task: Npm@1
-  inputs:
-    workingDir: server
-    verbose: false
-    customCommand: 'run postBuildUnInstall'
-  displayName: 'npm post build un-install'
- 
-- task: Npm@1
-  inputs:
-    workingDir: server
-    verbose: false
-    customCommand: 'run installProd'
-  displayName: 'npm production install'
- 
-- task: Npm@1
-  inputs:
-    workingDir: server
-    verbose: false
-    customCommand: 'run postInstallProd'
-  displayName: 'npm post production install'
- 
-- task: PublishPipelineArtifact@1
-  inputs:
-    targetPath: server/dist
-    artifact: 'server-dist'
-  displayName: 'Publish Pipeline Artifact'
+
+jobs:
+- job: Job_1
+  displayName: Deployment agent
+  pool:
+    vmImage: windows-2019
+  steps:
+  - checkout: self
+    clean: true
+    fetchTags: false
+  - task: Npm@1
+    displayName: npm install
+    inputs:
+      workingDir: server
+      verbose: false
+  - task: Npm@1
+    displayName: npm build
+    inputs:
+      command: custom
+      workingDir: server
+      verbose: false
+      customCommand: run build
+  - task: Npm@1
+    displayName: 'npm post build un-install '
+    inputs:
+      command: custom
+      workingDir: server
+      verbose: false
+      customCommand: run postBuildUnInstall
+  - task: Npm@1
+    displayName: npm production install
+    inputs:
+      command: custom
+      workingDir: server
+      verbose: false
+      customCommand: run installProd
+  - task: Npm@1
+    displayName: npm post production install
+    inputs:
+      command: custom
+      workingDir: server
+      verbose: false
+      customCommand: run postInstallProd
+  - task: PublishPipelineArtifact@1
+    displayName: Publish Pipeline Artifact
+    inputs:
+      path: server/dist
+      artifactName: server-dist
