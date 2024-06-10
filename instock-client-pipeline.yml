@@ -11,7 +11,7 @@ trigger:
 
 jobs:
 - job: CI_Job
-  displayName: CI Job
+  displayName: CI_Job
   pool:
     vmImage: windows-2019
   steps:
@@ -27,6 +27,7 @@ jobs:
 
   - task: Npm@1
     displayName: npm build
+    dependsOn: npm install
     inputs:
       workingDir: client    
       #command: custom
@@ -34,7 +35,8 @@ jobs:
       customCommand: run build
 
 - job: CD_Job
-  displayName: CD Job
+  displayName: CD_Job
+  dependsOn: CI_Job
   pool:
     vmImage: windows-2019
   
