@@ -1,26 +1,19 @@
-#Node.js
-# Build a general Node.js project with npm.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
- 
 trigger:
-- {{ branch }}
- 
-pool:
-  {{ pool }}
- 
+  branches:
+    include:
+    - '*'
  
 steps:
  - task: Npm@1
    inputs:    
-   workingDir: client  
-   verbose: false
-displayName: 'npm install'
+     workingDir: client  
+     verbose: false
+   displayName: 'npm install'
  
  - task: Npm@1  
-     inputs:
-      workingDir: client    
-      #command: custom  \
-      verbose: false  
-      customCommand: 'run build'
-    displayName: 'npm custom'
+   inputs:
+     workingDir: client    
+     #command: custom  \
+     verbose: false  
+     customCommand: 'run build'
+   displayName: 'npm custom'
