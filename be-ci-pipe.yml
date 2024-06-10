@@ -1,0 +1,51 @@
+#Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+ 
+trigger:
+- {{ branch }}
+ 
+pool:
+  {{ pool }}
+ 
+steps:
+- task: Npm@1
+  inputs:
+    workingDir: server
+    verbose: false
+  displayName: 'npm install'
+ 
+- task: Npm@1
+  inputs:
+    workingDir: server
+    verbose: false
+    customCommand: 'run build'
+  displayName: 'npm build'
+ 
+- task: Npm@1
+  inputs:
+    workingDir: server
+    verbose: false
+    customCommand: 'run postBuildUnInstall'
+  displayName: 'npm post build un-install'
+ 
+- task: Npm@1
+  inputs:
+    workingDir: server
+    verbose: false
+    customCommand: 'run installProd'
+  displayName: 'npm production install'
+ 
+- task: Npm@1
+  inputs:
+    workingDir: server
+    verbose: false
+    customCommand: 'run postInstallProd'
+  displayName: 'npm post production install'
+ 
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: server/dist
+    artifact: 'server-dist'
+  displayName: 'Publish Pipeline Artifact'
