@@ -1,0 +1,69 @@
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: refs/heads/main
+
+trigger:
+  branches:
+    include:
+    - '*'
+
+jobs:
+- job: CI_Job
+  displayName: CI_Job
+  pool:
+    vmImage: windows-2019
+  steps:
+  - checkout: self
+    clean: true
+    fetchTags: false
+
+  - task: Npm@1
+    displayName: npm install
+    inputs:    
+      workingDir: client  
+      verbose: false
+
+  - task: Npm@1
+    displayName: npm build
+    dependsOn: npm install
+    inputs:
+      workingDir: client    
+      #command: custom
+      verbose: false
+      customCommand: run build
+
+- job: CD_Job
+  displayName: CD_Job
+  dependsOn: CI_Job
+  pool:
+    vmImage: windows-2019
+  
+  steps:
+  - checkout: self
+    submodules: true
+
+  - task: AzureKeyVault@2
+    displayName: 'Fetch Key Vault Secrets'
+    inputs:
+      azureSubscription: 'Orange-Carrot-Prod-Ext-Authenticated-01 (2f24f064-2c79-4e0a-befc-6dc417b6f03a)'
+      KeyVaultName: KV-Prod-Ext-Shared-01
+      SecretsFilter: 'azure-static-web-apps-api-token' # string. Required. Secrets filter. Default: *.
+      #RunAsPreJob: false # boolean. Make secrets available to whole job. Default: false.
+
+  - task: AzureStaticWebApp@0
+    displayName: 'Static Web App: Deploy InStock Client'
+    env:
+      azure_static_web_apps_api_token: $(azure_static_web_apps_api_token)
+    inputs:
+      workingDirectory: '$(System.DefaultWorkingDirectory)/_instock-client-CI-main/client-dist'
+      #app_location: '/build'
+      #api_location: 'api'
+      #output_location: '/output'
+      skip_app_build: false
+      skip_api_build: false
+      is_static_export: false
+      verbose: false
+      azure_static_web_apps_api_token: $(azure-static-web-apps-api-token)  
+

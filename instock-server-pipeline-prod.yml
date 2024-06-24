@@ -1,0 +1,94 @@
+resources:
+  repositories:
+  - repository: self
+    type: git
+    ref: refs/heads/main
+
+trigger:
+  branches:
+    include:
+    - '*'
+
+jobs:
+- job: CI_Job
+  displayName: CI_Job
+  pool:
+    vmImage: windows-2019
+  steps:
+  - checkout: self
+    clean: true
+    fetchTags: false
+
+  - task: Npm@1
+    displayName: npm install
+    inputs:
+      workingDir: server
+      verbose: false
+
+  - task: Npm@1
+    displayName: npm build
+    dependsOn: npm install
+    inputs:
+      workingDir: server
+      command: custom
+      verbose: false
+      customCommand: run build
+
+  - task: Npm@1
+    displayName: npm post build un-install
+    dependsOn: npm build
+    inputs:
+      workingDir: server
+      command: custom
+      verbose: false
+      customCommand: run postBuildUnInstall
+
+  - task: Npm@1
+    displayName: npm production install
+    dependsOn: npm post build un-install
+    inputs:
+      workingDir: server
+      command: custom
+      verbose: false
+      customCommand: run installProd
+
+  - task: Npm@1
+    displayName: npm post production install
+    dependsOn: npm production install
+    inputs:
+      workingDir: server
+      command: custom
+      verbose: false
+      customCommand: run postInstallProd
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish Pipeline Artifact
+    dependsOn: npm post production install
+    inputs:
+      path: server/dist
+      artifactName: server-dist
+
+- job: CD_Job
+  displayName: CD_Job
+  dependsOn: CI_Job
+  pool:
+    vmImage: windows-2019
+  
+  steps:
+  - checkout: self
+    submodules: true
+
+  - task: AzureKeyVault@2
+    displayName: 'Fetch Key Vault Secrets'
+    inputs:
+      azureSubscription: 'Orange-Carrot-Prod-Ext-Authenticated-01 (2f24f064-2c79-4e0a-befc-6dc417b6f03a)'
+      KeyVaultName: KV-Prod-Ext-Shared-01
+      SecretsFilter: 'azure-static-web-apps-api-token' # string. Required. Secrets filter. Default: *.
+
+  - task: AzureRmWebAppDeployment@4
+    displayName: 'Azure App Service Deploy: APP-Ext-InStock-Dev'
+    inputs:
+      packageForLinux: '$(System.DefaultWorkingDirectory)/_instock-server-CI-main/server-dist'
+      azureSubscription: 'Orange-Carrot-Prod-Ext-Authenticated-01 (2f24f064-2c79-4e0a-befc-6dc417b6f03a)'
+      appType: webAppLinux
+      WebAppName: 'APP-Ext-FEInStock'

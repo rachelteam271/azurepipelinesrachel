@@ -84,7 +84,6 @@ jobs:
       azureSubscription: 'Orange-Carrot-Prod-Ext-Authenticated-01 (2f24f064-2c79-4e0a-befc-6dc417b6f03a)'
       KeyVaultName: KV-Prod-Ext-Shared-01
       SecretsFilter: 'azure-static-web-apps-api-token' # string. Required. Secrets filter. Default: *.
-      #RunAsPreJob: false # boolean. Make secrets available to whole job. Default: false.
 
   - task: AzureRmWebAppDeployment@4
     displayName: 'Azure App Service Deploy: APP-Ext-InStock-Dev'
